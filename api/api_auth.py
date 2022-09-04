@@ -1,5 +1,5 @@
 from sanic import Blueprint
-from sanic.response import text
+from sanic.response import text,json
 from sqlalchemy.future import select
 from sanic_ext import validate
 from project.models.schemas import UserIn, UserLoginBase
@@ -23,7 +23,7 @@ async def sing_up(request, body: UserIn):
         session.add(user)
 
     uidb64 = generate_uidb64(str(user.id))
-    return text(f'http://127.0.0.1:8000/api/auth/verify/{uidb64}/{token}')
+    return json({'URL': f'http://127.0.0.1:8000/api/auth/verify/{uidb64}/{token}'})
 
 
 @bp_auth.get("verify/<uidb64>/<token:uuid>")
@@ -38,8 +38,9 @@ async def verify_account(request, uidb64: str, token: UUID):
         if person is not None and str(token) == person.token:
             person.is_active = True
             session.add(person)
-            return text('Вы успешно активировали аккаунт')
-        return text('Ссылка не действительна')
+            return json({"Message": "Вы успешно активировали аккаунт"}, status=200)
+        return json({"Message": "Ссылка не действительна"}, status=404)
+
 
 
 @bp_auth.post("/login")
@@ -55,6 +56,7 @@ async def sing_in(request, body: UserLoginBase):
 
     if person is not None and verify_password(data['password'], hash_pass):
         return sing_jwt(person.username)
-    return text('Введены неправильные денные')
+    return json({"Message": "Введены неправильные денные"}, status=404)
+
 
 

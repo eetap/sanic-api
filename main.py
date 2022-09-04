@@ -1,4 +1,4 @@
-from sanic.response import text
+from sanic.response import text, json
 from sqlalchemy.future import select
 from server import app, init_db
 from sanic.signals import Event
@@ -45,15 +45,15 @@ async def payment(request, body: PaymentBase):
                 trs = Transaction(amount=data['amount'], bill_id_account=data['bill_id'])
                 session.add(account)
                 session.add(trs)
-                return text('Ваш балан успешно пополнен')
+                return json({"Message": "Ваш баланс успешно пополнен"}, status=200)
             else:
                 bill = Account(bill_id=data['bill_id'], balance=data['amount'], user_id=data['user_id'])
                 trs = Transaction(amount=data['amount'], bill_id_account=data['bill_id'])
                 session.add(bill)
                 session.add(trs)
-                return text('Создан новый счёт, ваш балан успешно пополнен')
+                return json({"Message": "Создан новый счёт, ваш балан успешно пополнен"}, status=200)
     else:
-        return text('Ошибка транзакции')
+        return json({"Message": "Ошибка транзакции"}, status=404)
 
 
 app.run(host='127.0.0.1', port='8000')

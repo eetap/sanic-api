@@ -30,7 +30,7 @@ async def buy_product(request, pk: int):
             item = result.scalar()
 
             if item is None:
-                return text('Нет такого продукта')
+                return json({"Message": "Нет такого продукта"}, status=404)
 
             stmt = select(Account).where((Account.user_id == user.id) & (Account.balance >= item.price))
             result = await session.execute(stmt)
@@ -39,10 +39,11 @@ async def buy_product(request, pk: int):
             if account is not None:
                 account.balance -= item.price
                 session.add(account)
-                return text('Операция совершена')
-            return text('На вашем аккаунте недостаточно средств')
+                return json({"Message": "Операция совершена"}, status=200)
+            return json({"Message": "На вашем аккаунте недостаточно средств"}, status=404)
     else:
-        return text('Ваш аккаунт не активирован123213213123')
+        return json({"Message": "Ваш аккаунт не активирован"}, status=404)
+
 
 
 @bp_product.get("/bill/list")
@@ -66,5 +67,6 @@ async def get_bills(request):
                     if transactions:
                         bill['transaction'] = [transaction.to_dict() for transaction in transactions]
                 return json(list_bills)
-            return text('У вас еще нет ни одно счёта')
-    return text('Ваш аккаунт не активирован')
+            return json({"Message": "У вас еще нет ни одно счёта"}, status=404)
+    return json({"Message": "Ваш аккаунт не активирован"}, status=404)
+

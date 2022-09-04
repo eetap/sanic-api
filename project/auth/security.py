@@ -14,7 +14,7 @@ ALGORITHM = os.getenv('ALGORITHM')
 private_key = os.getenv('PRIVATE_KEY')
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-#dad
+
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 

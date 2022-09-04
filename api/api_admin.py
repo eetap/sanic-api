@@ -7,7 +7,6 @@ from server import app
 from sanic_ext import validate
 from project.models.schemas import ProductBase, ProductPatch
 
-
 bp_admin = Blueprint('bp3', url_prefix='/api/admin')
 
 
@@ -21,8 +20,7 @@ async def get_users(request):
             query = await session.execute(select(User))
             users = query.scalars().all()
             return json([u.to_dict() for u in users])
-
-    return text('У вас нет прав доступа')
+    return json({"Message": "У вас нет прав доступа"}, status=404)
 
 
 @bp_admin.get("/bill")
@@ -35,8 +33,7 @@ async def get_check(request):
             query = await session.execute(select(Account))
             users = query.scalars().all()
             return json([u.to_dict() for u in users])
-
-    return text('У вас нет прав доступа')
+    return json({"Message": "У вас нет прав доступа"}, status=404)
 
 
 @bp_admin.get("/users_bill/list")
@@ -61,7 +58,7 @@ async def get_bills_users(request):
                     user['bills'] = []
 
             return json(list_users)
-    return text('У вас нет прав доступа')
+    return json({"Message": "У вас нет прав доступа"}, status=404)
 
 
 @bp_admin.get("/activate/<pk:int>")
@@ -78,10 +75,10 @@ async def get_check(request, pk: int):
             if person is not None:
                 person.is_active = True
                 session.add(person)
-                return text(f'Вы успешно активировали аккаунт пользователя {person.username}')
-            return text(f'Пользователь c id {pk} не найдет')
-
-    return text('У вас нет прав доступа')
+                return json({"Message": f'Вы успешно активировали аккаунт пользователя {person.username}'},
+                            status=200)
+            return json({"Message": f'Пользователь c id {pk} не найдет'}, status=404)
+    return json({"Message": "У вас нет прав доступа"}, status=404)
 
 
 @bp_admin.get("/deactivate/<pk:int>")
@@ -98,10 +95,10 @@ async def get_check(request, pk: int):
             if person is not None:
                 person.is_active = False
                 session.add(person)
-                return text(f'Вы успешно деактивировали аккаунт пользователя {person.username}')
-            return text(f'Пользователь c id {pk} не найдет')
-
-    return text('У вас нет прав доступа')
+                return json({"Message": f'Вы успешно деактивировали аккаунт пользователя {person.username}'},
+                            status=200)
+            return json({"Message": f'Пользователь c id {pk} не найдет'}, status=404)
+    return json({"Message": "У вас нет прав доступа"}, status=404)
 
 
 @bp_admin.post("/product")
@@ -114,12 +111,12 @@ async def product(request, body: ProductBase):
         async with session.begin():
             data = body.dict()
             item = Product(title=data['title'],
-                              description=data['description'],
-                              price=data['price'])
+                           description=data['description'],
+                           price=data['price'])
             session.add(item)
-            return text('Продукт успешно добавлен')
+            return json({"Message": "Продукт успешно добавлен"}, status=200)
 
-    return text('У вас нет прав доступа')
+    return json({"Message": "У вас нет прав доступа"}, status=404)
 
 
 class AdminView(HTTPMethodView):
@@ -136,9 +133,9 @@ class AdminView(HTTPMethodView):
 
             if item is not None:
                 return json(item.to_dict())
-            return json({'Ошибка': 'Такой товар не найден'})
+            return json({"Message": "Такой товар не найден"}, status=404)
 
-        return text('У вас нет прав доступа')
+        return json({"Message": "У вас нет прав доступа"}, status=404)
 
     @validate(json=ProductBase)
     async def put(self, request, pk: int, body: ProductBase):
@@ -156,10 +153,10 @@ class AdminView(HTTPMethodView):
                     item.description = data['description']
                     item.price = data['price']
                     session.add(item)
-                    return text(f'Вы успешно изменили параметры товара')
-                return json({'Ошибка': 'Такой товар не найден'})
+                    return json({"Message": "Вы успешно изменили параметры товара"}, status=200)
+                return json({"Message": "Такой товар не найден"}, status=404)
 
-        return text('У вас нет прав доступа')
+        return json({"Message": "У вас нет прав доступа"}, status=404)
 
     @validate(json=ProductPatch)
     async def patch(self, request, pk: int, body: ProductPatch):
@@ -180,10 +177,10 @@ class AdminView(HTTPMethodView):
                     if data['price']:
                         item.price = data['price']
                     session.add(item)
-                    return text(f'Вы успешно изменили параметры товара')
-                return json({'Ошибка': 'Такой товар не найден'})
+                    return json({"Message": "Вы успешно изменили параметры товара"}, status=200)
+                return json({"Message": "Такой товар не найден"}, status=404)
 
-        return text('У вас нет прав доступа')
+        return json({"Message": "У вас нет прав доступа"}, status=404)
 
     async def delete(self, request, pk: int):
         user = request.ctx.user
@@ -195,10 +192,10 @@ class AdminView(HTTPMethodView):
                 item = result.scalar()
                 if item is not None:
                     await session.delete(item)
-                    return text(f'Вы успешно Удалили товар')
-                return text(f'Товар c id {pk} не найдет')
+                    return json({"Message": "Вы успешно Удалили товар"}, status=200)
+                return json({"Message": f"Товар c id {pk} не найдет"}, status=404)
 
-        return text('У вас нет прав доступа')
+        return json({"Message": "У вас нет прав доступа"}, status=404)
 
 
 app.add_route(AdminView.as_view(), "/api/admin/product/<pk:int>")
